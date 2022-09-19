@@ -68,10 +68,8 @@ impl<R: AsyncBufRead, E: Encode> Encoder<R, E> {
                     match res {
                         Poll::Pending => {
                             if read == 0 {
-                                // println!("encoding (read 0: pending)");
                                 return Poll::Pending;
                             } else {
-                                // println!("encoding -> flushing");
                                 State::Flushing
                             }
                         }
@@ -79,7 +77,6 @@ impl<R: AsyncBufRead, E: Encode> Encoder<R, E> {
                             let input = res?;
 
                             if input.is_empty() {
-                                // println!("encoding -> finishing");
                                 State::Finishing
                             } else {
                                 let mut input = PartialBuffer::new(input);
@@ -87,7 +84,6 @@ impl<R: AsyncBufRead, E: Encode> Encoder<R, E> {
                                 let len = input.written().len();
                                 this.reader.as_mut().consume(len);
                                 read += len;
-                                // println!("encoding -> encoding (len: {len})");
                                 State::Encoding
                             }
                         }
@@ -96,27 +92,22 @@ impl<R: AsyncBufRead, E: Encode> Encoder<R, E> {
 
                 State::Flushing => {
                     if read == 0 {
-                        // println!("flushing (read: 0)");
                         let mut input = PartialBuffer::new(&[][..]);
                         this.encoder.encode(&mut input, output)?;
                     }
 
                     if this.encoder.flush(output)? {
-                        // println!("flushing -> encoding");
                         read = 0;
                         State::Encoding
                     } else {
-                        // println!("flushing -> flushing");
                         State::Flushing
                     }
                 }
 
                 State::Finishing => {
                     if this.encoder.finish(output)? {
-                        // println!("finishing -> done");
                         State::Done
                     } else {
-                        // println!("finishing -> finishing");
                         State::Finishing
                     }
                 }
@@ -125,7 +116,6 @@ impl<R: AsyncBufRead, E: Encode> Encoder<R, E> {
             };
 
             if let State::Done = *this.state {
-                // println!("done!");
                 return Poll::Ready(Ok(()));
             }
 
